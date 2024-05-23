@@ -2,7 +2,7 @@ package org.example.models;
 
 import org.example.enums.AnimalState;
 
-abstract class Animal {
+abstract class Animal implements Runnable {
     private final int lifespan;
     private final double chanceOfGettingSick;
     private final int foodConsumption;
@@ -50,5 +50,18 @@ abstract class Animal {
 
     public String getFoodType() {
         return null;
+    }
+
+    @Override
+    public void run() {
+        while (!Thread.currentThread().isInterrupted()) {
+            System.out.println(this.getClass().getSimpleName() + " is running.");
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                System.out.println(this.getClass().getSimpleName() + " thread was interrupted.");
+            }
+        }
     }
 }
