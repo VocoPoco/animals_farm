@@ -1,28 +1,43 @@
 package org.example.models;
 
+import org.example.enums.Item;
+import org.example.enums.OtherType;
+import org.example.enums.ProductionType;
+
 import java.util.HashMap;
 
 public class Inventory {
-    public HashMap<String, Integer> inventory;
+    public HashMap<Item, Integer> inventory;
+    private static Inventory instance;
 
-    public Inventory() {
+    private Inventory() {
         inventory = new HashMap<>();
-        inventory.put("pig_food", 10);
-        inventory.put("cow_food", 10);
-        inventory.put("hen_food", 10);
-        inventory.put("goat_food", 10);
-        inventory.put("sheep_food", 10);
-        inventory.put("duck_food", 10);
-        inventory.put("horse_food", 10);
-        inventory.put("water", 10);
-        inventory.put("pills", 10);
+        initInventory();
     }
 
-    public void addItem(String item, int quantity) {
-        inventory.put(item, inventory.getOrDefault(item, 0) + quantity);
+    private void initInventory() {
+        for (var type : ProductionType.values()) {
+            inventory.put(type, 10);
+        }
+        for (var type : OtherType.values()) {
+            if (type.equals(OtherType.MONEY)) {
+                inventory.put(type, 1000);
+            }
+            inventory.put(type, 10);
+        }
+    }
+    public static Inventory getInstance() {
+        if (instance == null) {
+            instance = new Inventory();
+        }
+        return instance;
     }
 
-    public void removeItem(String item, int quantity) {
+    public void addItem(Item item, int quantity) {
+        inventory.put(item, inventory.getOrDefault(item,0) + quantity);
+    }
+
+    public void removeItem(Item item, int quantity) {
         if (inventory.containsKey(item)) {
             int currentQuantity = inventory.get(item);
             if (currentQuantity <= quantity) {
@@ -33,12 +48,12 @@ public class Inventory {
         }
     }
 
-    public int getItemQuantity(String item) {
+    public int getItemQuantity(Item item) {
         return inventory.getOrDefault(item, 0);
     }
 
     public void printInventory() {
-        for (String item : inventory.keySet()) {
+        for (Item item : inventory.keySet()) {
             System.out.println(item + ": " + inventory.get(item));
         }
     }
