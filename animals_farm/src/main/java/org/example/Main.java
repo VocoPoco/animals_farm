@@ -20,7 +20,7 @@ public class Main {
         cowThread.start();
 
         // Create and start the global clock thread
-        GlobalClock globalClock = new GlobalClock(1);
+        GlobalClock globalClock = GlobalClock.getInstance();
         Thread clockThread = new Thread(globalClock);
         //clockThread.setDaemon(true); // Optional: makes it a daemon thread
         clockThread.start();

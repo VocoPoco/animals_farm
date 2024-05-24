@@ -25,11 +25,11 @@ abstract class Animal implements Runnable {
         this.foodConsumption = foodConsumption;
         this.waterConsumption = waterConsumption;
         this.productionFrequency = productionFrequency;
-        this.foodQuantityProduction = foodProduction;
+        this.seasonalEffectPercentage = 1.0;
+        setFoodQuantityProduction(foodQuantityProduction);
         this.foodType = foodType;
         this.state = AnimalState.FULL;
         this.isSick = false;
-        this.seasonalEffectPercentage = 1.0;
 
     }
 
@@ -112,7 +112,7 @@ abstract class Animal implements Runnable {
                     // get water and food from the storage reserve
                     System.out.println("Ate And Drank!");
                     if (daysLived % productionFrequency == 0) {
-                        // get the
+                        // take the production into the inventory
                         System.out.println("Produced " + foodQuantityProduction + " " + foodType);
                     }
                 } else {

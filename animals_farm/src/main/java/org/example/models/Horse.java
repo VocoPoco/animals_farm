@@ -1,17 +1,15 @@
 package org.example.models;
 
+import org.example.enums.FoodType;
+
 public class Horse extends Animal {
     private static final int LIFESPAN = 25;
     private static final double CHANCE_OF_GETTING_SICK = 0.8;
     private static final int FOOD_CONSUMPTION = 8;
     private static final int WATER_CONSUMPTION = 7;
-    private static final int FOOD_PRODUCTION = 2;
+    private static final int FOOD_PRODUCTION = 30;
+    private static final FoodType FOOD_TYPE = FoodType.HORSE_MEAT;
     public Horse() {
-        super(LIFESPAN, CHANCE_OF_GETTING_SICK, FOOD_CONSUMPTION, WATER_CONSUMPTION, FOOD_PRODUCTION);
-    }
-
-    @Override
-    public String getFoodType() {
-        return "horse_food";
+        super(LIFESPAN, CHANCE_OF_GETTING_SICK, FOOD_CONSUMPTION, WATER_CONSUMPTION, FOOD_PRODUCTION, FOOD_TYPE);
     }
 }
