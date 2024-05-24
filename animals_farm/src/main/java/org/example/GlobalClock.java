@@ -15,10 +15,11 @@ public class GlobalClock implements Runnable {
     private int year;
     private SeasonType season;
     private final int speed;
+    private static GlobalClock instance;
 
     private static final int[] DAYS_IN_MONTH = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
-    public GlobalClock(int speed) {
+    private GlobalClock(int speed) {
         this.speed = speed;
         this.second = 0;
         this.minute = 0;
@@ -152,5 +153,12 @@ public class GlobalClock implements Runnable {
         } else {
             season = SeasonType.WINTER;
         }
+    }
+
+    public static GlobalClock getInstance() {
+        if (instance == null) {
+            instance = new GlobalClock(1);
+        }
+        return instance;
     }
 }
