@@ -1,5 +1,9 @@
 package org.example;
 
+import org.example.enums.SeasonType;
+
+import java.time.Month;
+
 @SuppressWarnings("ALL")
 public class GlobalClock implements Runnable {
     private int second;
@@ -9,7 +13,7 @@ public class GlobalClock implements Runnable {
     private int week;
     private int month;
     private int year;
-    private int season;//moje posle da go napravim s edin enum za 4te sezona
+    private SeasonType season;
     private final int speed;
 
     private static final int[] DAYS_IN_MONTH = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
@@ -23,7 +27,7 @@ public class GlobalClock implements Runnable {
         this.week = 1;
         this.month = 1;
         this.year = 0;
-        this.season = 1; //1 - prolet 2 - lqto 3- esen 4 - zima
+        this.season = SeasonType.WINTER;
     }
     @Override
     public void run() {
@@ -134,19 +138,19 @@ public class GlobalClock implements Runnable {
         year++;
     }
 
-    public int getSeason() {
+    public SeasonType getSeason() {
         return season;
     }
 
     private void updateSeason() {
         if (month >= 3 && month <= 5) {
-            season = 2;
+            season = SeasonType.SPRING;
         } else if (month >= 6 && month <= 8) {
-            season = 3;
+            season = SeasonType.SUMMER;
         } else if (month >= 9 && month <= 11) {
-            season = 4;
+            season = SeasonType.AUTUMN;
         } else {
-            season = 1;
+            season = SeasonType.WINTER;
         }
     }
 }
