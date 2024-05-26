@@ -2,8 +2,6 @@ package org.example;
 
 import org.example.enums.SeasonType;
 
-import java.time.Month;
-
 @SuppressWarnings("ALL")
 public class GlobalClock implements Runnable {
     private int second;
@@ -28,7 +26,7 @@ public class GlobalClock implements Runnable {
         this.week = 1;
         this.month = 1;
         this.year = 0;
-        this.season = SeasonType.WINTER;
+        this.season = SeasonType.SPRING;
     }
     @Override
     public void run() {
@@ -57,7 +55,7 @@ public class GlobalClock implements Runnable {
         }
     }
 
-    private int getMinute() {
+    public int getMinute() {
         return minute;
     }
     private void addMinute() {
@@ -157,7 +155,7 @@ public class GlobalClock implements Runnable {
 
     public static GlobalClock getInstance() {
         if (instance == null) {
-            instance = new GlobalClock(1);
+            instance = new GlobalClock(10000);
         }
         return instance;
     }
