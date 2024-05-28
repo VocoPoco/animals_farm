@@ -95,43 +95,57 @@ public abstract class Animal implements Runnable {
         }
     }
 
-    @Override
     public void run() {
         int daysLived = 0;
         int sickDays = 0;
         int hungryDays = 0;
-        while (!Thread.currentThread().isInterrupted() && daysLived < lifespan) {
+        int thirstyDays = 0;
+        while (!Thread.currentThread().isInterrupted() && daysLived < lifespan && sickDays < 10 && hungryDays < 10 && thirstyDays < 10) {
             System.out.println(this.getClass().getSimpleName() + " is running.");
             try {
                 checkIfGetsSick();
                 SeasonType currentSeason = GlobalClock.getInstance().getSeason();
                 updateProductivityBasedOnSeason(currentSeason);
-
+                Inventory inventory = Inventory.getInstance();
                 if (!isSick) {
                     sickDays = 0;
-                    Inventory.getInstance().removeItem(OtherType.WATER, this.waterConsumption);
-                    Inventory.getInstance().removeItem(OtherType.FOOD, this.foodConsumption);
-                    System.out.println("Ate And Drank!");
+                    if (inventory.getItem(OtherType.FOOD) == 0) {
+                        hungryDays++;
+                    } else {
+                        inventory.removeItem(OtherType.FOOD, this.foodConsumption);
+                    }
+
+                    if (inventory.getItem(OtherType.WATER) == 0){
+                        thirstyDays++;
+                    } else {
+                        inventory.removeItem(OtherType.WATER, this.waterConsumption);
+                    }
+
+                    System.out.println("Ate and Drank!");
                     if (daysLived % productionFrequency == 0) {
-                        Inventory.getInstance().addItem(productionType, foodQuantityProduction);
+                        inventory.addItem(productionType, foodQuantityProduction);
                         System.out.println("Produced " + foodQuantityProduction + " " + productionType);
                     }
                 } else {
                     sickDays++;
                     System.out.println(this.getClass().getSimpleName() + " is sick and cannot produce food today.");
-                    if (sickDays > 10) {
-                        System.out.println(this.getClass().getSimpleName() + " has been sick for more than 10 days and has died.");
-                        //must kill the animal
-                        break;
-                    }
                 }
                 Thread.sleep(1000);
-                //trqbva da vidim kak shte se rajdat jivotnite
                 daysLived++;
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 System.out.println(this.getClass().getSimpleName() + " thread was interrupted.");
             }
+        }
+
+        if (hungryDays >= 10) {
+            System.out.println(this.getClass().getSimpleName() + " died of hunger.");
+        }
+        if (thirstyDays >= 10) {
+            System.out.println(this.getClass().getSimpleName() + " died of thirst.");
+        }
+        if (sickDays >= 10) {
+            System.out.println(this.getClass().getSimpleName() + " died of sickness.");
         }
     }
 }

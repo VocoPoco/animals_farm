@@ -48,7 +48,7 @@ public class Inventory {
         }
     }
 
-    public int getItemQuantity(Item item) {
+    public int getItem(Item item) {
         return inventory.getOrDefault(item, 0);
     }
 

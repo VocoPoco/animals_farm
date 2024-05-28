@@ -4,8 +4,6 @@ import org.example.enums.AnimalState;
 import org.example.enums.OtherType;
 import org.example.enums.ProductionType;
 
-import javax.print.attribute.standard.MediaSize;
-import java.lang.reflect.AnnotatedArrayType;
 import java.util.ArrayList;
 
 public class Farm {
@@ -21,7 +19,7 @@ public class Farm {
         if(animal.getState() == AnimalState.FULL || animal.getState() == AnimalState.FED_THIRSTY) {
             throw new RuntimeException("ERROR: Animal is not hungry.");
         }
-        if(animal.getFoodConsumption() > inventory.getItemQuantity(animal.getFoodType())) {
+        if(animal.getFoodConsumption() > inventory.getItem(animal.getFoodType())) {
             throw new RuntimeException("ERROR: Not enough food.");
         }
         this.inventory.removeItem(animal.getFoodType(), animal.getFoodConsumption());
@@ -36,7 +34,7 @@ public class Farm {
         if(animal.getState() == AnimalState.FULL || animal.getState() == AnimalState.DRENCHED_HUNGRY) {
             throw new RuntimeException("ERROR: Animal is not thirsty.");
         }
-        if(animal.getWaterConsumption() > inventory.getItemQuantity(OtherType.WATER)) {
+        if(animal.getWaterConsumption() > inventory.getItem(OtherType.WATER)) {
             throw new RuntimeException("ERROR: Not enough water.");
         }
         inventory.removeItem(OtherType.WATER, animal.getWaterConsumption());
@@ -51,7 +49,7 @@ public class Farm {
         if(!animal.getIsSick()) {
             throw new RuntimeException("ERROR: Animal is not sick");
         }
-        if(animal.getMedicineConsumption() > inventory.getItemQuantity(OtherType.MEDICINE)) {
+        if(animal.getMedicineConsumption() > inventory.getItem(OtherType.MEDICINE)) {
             throw new RuntimeException("ERROR: Not enough medicine. The animal may die soon.");
         }
         inventory.removeItem(OtherType.MEDICINE, animal.getMedicineConsumption());
@@ -59,7 +57,7 @@ public class Farm {
     }
 
     public void buy(OtherType item, int quantity) {
-        if(item.getPrice() > inventory.getItemQuantity(OtherType.MONEY)) {
+        if(item.getPrice() > inventory.getItem(OtherType.MONEY)) {
             throw new RuntimeException("ERROR: Not enough money. Maybe you want to sell some production.");
         }
         inventory.removeItem(OtherType.MONEY, item.getPrice());
@@ -67,7 +65,7 @@ public class Farm {
     }
 
     public void sell(ProductionType production, int quantity) {
-        if(inventory.getItemQuantity(production) < quantity) {
+        if(inventory.getItem(production) < quantity) {
             throw new RuntimeException("ERROR: Not enough of this production.");
         }
         inventory.removeItem(production, quantity);
