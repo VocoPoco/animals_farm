@@ -1,10 +1,12 @@
-package org.example.models;
+package org.example.models.animals;
 
 import org.example.GlobalClock;
 import org.example.enums.AnimalState;
 import org.example.enums.OtherType;
 import org.example.enums.ProductionType;
 import org.example.enums.SeasonType;
+import org.example.models.Farm;
+import org.example.models.Inventory;
 
 import java.util.Random;
 

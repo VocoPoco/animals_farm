@@ -1,5 +1,7 @@
 package org.example.models;
 
+import org.example.models.animals.Animal;
+
 import java.util.concurrent.Semaphore;
 
 public class Hospital {

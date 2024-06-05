@@ -3,6 +3,7 @@ package org.example.models;
 import org.example.enums.AnimalState;
 import org.example.enums.OtherType;
 import org.example.enums.ProductionType;
+import org.example.models.animals.Animal;
 
 import java.util.ArrayList;
 
