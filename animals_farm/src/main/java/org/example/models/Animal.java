@@ -25,13 +25,12 @@ public abstract class Animal implements Runnable {
         this.chanceOfGettingSick = chanceOfGettingSick;
         this.foodConsumption = foodConsumption;
         this.waterConsumption = waterConsumption;
-        this.medicineConsumption = waterConsumption;
+        this.medicineConsumption = medicineConsumption;
         this.productionFrequency = productionFrequency;
         this.foodQuantityProduction = foodQuantityProduction;
         this.productionType = productionType;
         this.state = AnimalState.FULL;
         this.isSick = false;
-
     }
 
     public int getLifespan() {
@@ -106,29 +105,34 @@ public abstract class Animal implements Runnable {
                 checkIfGetsSick();
                 SeasonType currentSeason = GlobalClock.getInstance().getSeason();
                 updateProductivityBasedOnSeason(currentSeason);
-                Inventory inventory = Inventory.getInstance();
+                Farm farm = Farm.getInstance();
                 if (!isSick) {
                     sickDays = 0;
-                    if (inventory.getItem(OtherType.FOOD) == 0) {
+                    try {
+                        farm.feed(this);
+                    } catch (RuntimeException e) {
                         hungryDays++;
-                    } else {
-                        inventory.removeItem(OtherType.FOOD, this.foodConsumption);
                     }
-
-                    if (inventory.getItem(OtherType.WATER) == 0){
+                    try {
+                        farm.giveWater(this);
+                    } catch (RuntimeException e) {
                         thirstyDays++;
-                    } else {
-                        inventory.removeItem(OtherType.WATER, this.waterConsumption);
                     }
 
                     System.out.println("Ate and Drank!");
                     if (daysLived % productionFrequency == 0) {
-                        inventory.addItem(productionType, foodQuantityProduction);
+                        Inventory.getInstance().addItem(productionType, foodQuantityProduction);
                         System.out.println("Produced " + foodQuantityProduction + " " + productionType);
                     }
                 } else {
                     sickDays++;
                     System.out.println(this.getClass().getSimpleName() + " is sick and cannot produce food today.");
+                    try {
+                        farm.getHospital().admit(this);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        System.out.println(this.getClass().getSimpleName() + " thread was interrupted while trying to get treated.");
+                    }
                 }
                 Thread.sleep(1000);
                 daysLived++;
@@ -146,6 +150,10 @@ public abstract class Animal implements Runnable {
         }
         if (sickDays >= 10) {
             System.out.println(this.getClass().getSimpleName() + " died of sickness.");
+        }
+
+        if (hungryDays >= 10 || thirstyDays >= 10 || sickDays >= 10) {
+            Farm.getInstance().killAnimal(this);
         }
     }
 }

@@ -7,12 +7,26 @@ import org.example.enums.ProductionType;
 import java.util.ArrayList;
 
 public class Farm {
-    public ArrayList<Animal> animals;
-    public Inventory inventory;
+    private static Farm instance;
+    private final ArrayList<Animal> animals;
+    private final Inventory inventory;
+    private final Hospital hospital;
 
-    public Farm() {
+    private Farm() {
         this.animals = new ArrayList<>();
         this.inventory = Inventory.getInstance();
+        this.hospital = new Hospital(3);
+    }
+
+    public static Farm getInstance() {
+        if (instance == null) {
+            instance = new Farm();
+        }
+        return instance;
+    }
+
+    public Hospital getHospital() {
+        return hospital;
     }
 
     public void feed(Animal animal)  {

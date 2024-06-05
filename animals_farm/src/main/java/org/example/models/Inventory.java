@@ -7,7 +7,7 @@ import org.example.enums.ProductionType;
 import java.util.HashMap;
 
 public class Inventory {
-    public HashMap<Item, Integer> inventory;
+    private HashMap<Item, Integer> inventory;
     private static Inventory instance;
 
     private Inventory() {
