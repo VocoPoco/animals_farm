@@ -47,10 +47,12 @@ public class Farm {
 
     public void giveWater(Animal animal) {
         if(animal.getState() == AnimalState.FULL || animal.getState() == AnimalState.DRENCHED_HUNGRY) {
-            throw new RuntimeException("ERROR: Animal is not thirsty.");
+            System.out.println("ERROR: Animal is not thirsty.");
+            return;
         }
         if(animal.getWaterConsumption() > inventory.getItem(OtherType.WATER)) {
-            throw new RuntimeException("ERROR: Not enough water.");
+            System.out.println("ERROR: Not enough water.");
+            return;
         }
         inventory.removeItem(OtherType.WATER, animal.getWaterConsumption());
         if(animal.getState() == AnimalState.HUNGRY_THIRSTY) {
@@ -62,26 +64,38 @@ public class Farm {
 
     public void heal(Animal animal) {
         if(!animal.getIsSick()) {
-            throw new RuntimeException("ERROR: Animal is not sick");
+            System.out.println("ERROR: Animal is not sick");
+            return;
         }
         if(animal.getMedicineConsumption() > inventory.getItem(OtherType.MEDICINE)) {
-            throw new RuntimeException("ERROR: Not enough medicine. The animal may die soon.");
+            System.out.println("ERROR: Not enough medicine. The animal may die soon.");
+            return;
         }
         inventory.removeItem(OtherType.MEDICINE, animal.getMedicineConsumption());
         animal.setIsSick(false);
     }
 
     public void buy(OtherType item, int quantity) {
-        if(item.getPrice() > inventory.getItem(OtherType.MONEY)) {
-            throw new RuntimeException("ERROR: Not enough money. Maybe you want to sell some production.");
+        if (quantity <= 0) {
+            System.out.println("ERROR: You must buy a positive amount of " + item);
+            return;
+        }
+        if (item.getPrice() > inventory.getItem(OtherType.MONEY)) {
+            System.out.println("ERROR: Not enough money. Maybe you want to sell some production.");
+            return;
         }
         inventory.removeItem(OtherType.MONEY, item.getPrice());
         inventory.addItem(item, quantity);
     }
 
     public void sell(ProductionType production, int quantity) {
-        if(inventory.getItem(production) < quantity) {
-            throw new RuntimeException("ERROR: Not enough of this production.");
+        if (quantity <= 0) {
+            System.out.println("ERROR: You must sell a positive amount of " + production);
+            return;
+        }
+        if (inventory.getItem(production) < quantity) {
+            System.out.println("ERROR: Not enough of this production.");
+            return;
         }
         inventory.removeItem(production, quantity);
         inventory.addItem(OtherType.MONEY, production.getPrice());
