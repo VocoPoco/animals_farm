@@ -21,6 +21,8 @@ public class Hospital {
             Thread.sleep(2000);
             Farm.getInstance().heal(animal);
             System.out.println(animal.getClass().getSimpleName() + " has been treated and is leaving the hospital.");
+        } catch (Exception e) {
+            System.out.println("ERROR: Could not treat animal. ");
         } finally {
             capacity.release();
         }
