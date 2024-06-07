@@ -34,21 +34,34 @@ public class Inventory {
     }
 
     public void addItem(Item item, int quantity) {
+        if (quantity <= 0) {
+            System.out.println("ERROR: Quantity to add must be positive.");
+        }
         inventory.put(item, inventory.getOrDefault(item,0) + quantity);
     }
 
     public void removeItem(Item item, int quantity) {
-        if (inventory.containsKey(item)) {
-            int currentQuantity = inventory.get(item);
-            if (currentQuantity <= quantity) {
-                inventory.remove(item);
-            } else {
-                inventory.put(item, currentQuantity - quantity);
-            }
+        if (!inventory.containsKey(item)) {
+            System.out.println("ERROR: No such item in inventory. ");
+            return;
+        }
+        if (quantity <= 0) {
+            System.out.println("ERROR: Quantity to remove must be positive. Provided: " + quantity);
+            return;
+        }
+        int currentQuantity = inventory.get(item);
+        if (currentQuantity <= quantity) {
+            inventory.remove(item);
+        } else {
+            inventory.put(item, currentQuantity - quantity);
         }
     }
 
     public int getItem(Item item) {
+        if (!inventory.containsKey(item)) {
+            System.out.println("ERROR: No such item in inventory. ");
+            return 0;
+        }
         return inventory.getOrDefault(item, 0);
     }
 
