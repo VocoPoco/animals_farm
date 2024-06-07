@@ -5,6 +5,7 @@ import org.example.models.animals.Animal;
 import java.util.concurrent.Semaphore;
 
 public class Hospital {
+    private static Hospital instance;
     private final Semaphore capacity;
 
     public Hospital() {
@@ -12,6 +13,13 @@ public class Hospital {
     }
     public Hospital(int capacity) {
         this.capacity = new Semaphore(capacity, true);
+    }
+
+    public static Hospital getInstance() {
+        if (instance == null) {
+            instance = new Hospital();
+        }
+        return instance;
     }
 
     public void admit(Animal animal) throws InterruptedException {
