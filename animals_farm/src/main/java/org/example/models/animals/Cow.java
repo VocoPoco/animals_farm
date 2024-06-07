@@ -1,4 +1,4 @@
-package org.example.models;
+package org.example.models.animals;
 
 import org.example.enums.ProductionType;
 import org.example.enums.SeasonType;
