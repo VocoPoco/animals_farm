@@ -29,6 +29,13 @@ public class Farm {
     public Hospital getHospital() {
         return hospital;
     }
+    public Inventory getInventory() {
+        return inventory;
+    }
+
+    public void addAnimal(Animal animal) {
+       animals.add(animal);
+    }
 
     public void feed(Animal animal)  {
         if(animal.getState() == AnimalState.FULL || animal.getState() == AnimalState.FED_THIRSTY) {

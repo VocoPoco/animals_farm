@@ -28,11 +28,12 @@ public class GlobalClock implements Runnable {
         this.year = 0;
         this.season = SeasonType.SPRING;
     }
+
     @Override
     public void run() {
         while (!Thread.currentThread().isInterrupted()) {
             try {
-                int speedTime =  1000 / speed;
+                int speedTime = 1000 / speed;
                 Thread.sleep(speedTime);
                 addSecond();
             } catch (InterruptedException e) {
@@ -58,6 +59,7 @@ public class GlobalClock implements Runnable {
     public int getMinute() {
         return minute;
     }
+
     private void addMinute() {
         if (this.minute < 59) {
             minute++;
