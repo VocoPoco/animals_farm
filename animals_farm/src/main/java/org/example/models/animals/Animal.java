@@ -1,5 +1,6 @@
 package org.example.models.animals;
 
+import org.example.EndOfDayListener;
 import org.example.GlobalClock;
 import org.example.enums.AnimalState;
 import org.example.enums.ProductionType;
@@ -9,7 +10,7 @@ import org.example.models.Inventory;
 
 import java.util.Random;
 
-public abstract class Animal implements Runnable {
+public abstract class Animal implements Runnable, EndOfDayListener {
     private final int lifespan;
     private final double chanceOfGettingSick;
     private final int foodConsumption;
@@ -20,8 +21,6 @@ public abstract class Animal implements Runnable {
     private final ProductionType productionType;
     private AnimalState state;
     private boolean isSick;
-    private final Farm farm;
-    private final StringBuilder eventLog;
 
     public Animal(int lifespan, double chanceOfGettingSick, int foodConsumption, int waterConsumption, int medicineConsumption, int productionFrequency, int foodQuantityProduction, ProductionType productionType) {
         this.lifespan = lifespan;
@@ -34,8 +33,6 @@ public abstract class Animal implements Runnable {
         this.productionType = productionType;
         this.state = AnimalState.FULL;
         this.isSick = false;
-        this.farm = Farm.getInstance();
-        this.eventLog = new StringBuilder();
     }
 
     public int getLifespan() {
@@ -100,14 +97,32 @@ public abstract class Animal implements Runnable {
             setIsSick(true);
         }
     }
+    private void determineState(int hungryDays, int thirstyDays) {
+        if (hungryDays != 0 && thirstyDays != 0) {
+            setState(AnimalState.HUNGRY_THIRSTY);
+        } else if (hungryDays != 0) {
+            setState(AnimalState.DRENCHED_HUNGRY);
+        } else if (thirstyDays != 0) {
+            setState(AnimalState.FED_THIRSTY);
+        } else {
+            setState(AnimalState.FULL);
+        }
+    }
 
     public void run() {
         int daysLived = 0;
         int sickDays = 0;
         int hungryDays = 0;
         int thirstyDays = 0;
+
+        GlobalClock.getInstance().addEndOfDayListener(this);
+
         while (!Thread.currentThread().isInterrupted() && daysLived < lifespan && sickDays < 10 && hungryDays < 10 && thirstyDays < 10) {
             try {
+                synchronized (this) {
+                    wait();
+                }
+                System.out.println("Living day " +  daysLived);
                 checkIfGetsSick();
                 SeasonType currentSeason = GlobalClock.getInstance().getSeason();
                 updateProductivityBasedOnSeason(currentSeason);
@@ -115,28 +130,29 @@ public abstract class Animal implements Runnable {
                 if (!isSick) {
                     sickDays = 0;
                     try {
-                        farm.feed(this);
+                        Farm.getInstance().feed(this);
                     } catch (RuntimeException e) {
                         hungryDays++;
                     }
+                    System.out.println("Ate and Drank!");
                     try {
-                        farm.giveWater(this);
+                        Farm.getInstance().giveWater(this);
                     } catch (RuntimeException e) {
                         thirstyDays++;
                     }
-
                     if (daysLived % productionFrequency == 0) {
                         Inventory.getInstance().addItem(productionType, foodQuantityProduction);
+                        System.out.println("Produced thingy wingy");
                     }
                 } else {
                     sickDays++;
                     try {
-                        farm.getHospital().admitAnimal(this);
+                        Farm.getInstance().getHospital().admitAnimal(this);
                     } catch (RuntimeException e) {
                         Thread.sleep(1000);
                     }
                 }
-
+                determineState(hungryDays, thirstyDays);
                 daysLived++;
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
@@ -145,18 +161,13 @@ public abstract class Animal implements Runnable {
         }
 
         if (hungryDays >= 10 || thirstyDays >= 10 || sickDays >= 10) {
-            farm.killAnimal(this);
+            Farm.getInstance().killAnimal(this);
         }
-
-        recordDailySummary(daysLived, sickDays, hungryDays, thirstyDays);
     }
-
-    private void recordDailySummary(int daysLived, int sickDays, int hungryDays, int thirstyDays) {
-        eventLog.setLength(0);
-        eventLog.append(this.getClass().getSimpleName()).append(" summary - Day: ").append(daysLived)
-                .append(", Sick days: ").append(sickDays)
-                .append(", Hungry days: ").append(hungryDays)
-                .append(", Thirsty days: ").append(thirstyDays);
-        farm.logEvent(eventLog.toString());
+    @Override
+    public void onEndOfDay() {
+        synchronized (this) {
+            notify();
+        }
     }
 }

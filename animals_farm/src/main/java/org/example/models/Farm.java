@@ -3,23 +3,52 @@ package org.example.models;
 import org.example.enums.AnimalState;
 import org.example.enums.OtherType;
 import org.example.enums.ProductionType;
-import org.example.models.animals.Animal;
+import org.example.models.animals.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class Farm {
     private static Farm instance;
-    private final ArrayList<Animal> animals;
+    private ArrayList<Animal> animals;
     private final Inventory inventory;
     private final Hospital hospital;
     private final List<String> eventLog;
 
+    private static final HashMap<String, Integer> animalPrices = new HashMap<>();
+
+    static {
+        animalPrices.put("COW", 100);
+        animalPrices.put("DUCK", 20);
+        animalPrices.put("GOAT", 50);
+        animalPrices.put("HEN", 15);
+        animalPrices.put("HORSE", 150);
+        animalPrices.put("PIG", 70);
+        animalPrices.put("SHEEP", 60);
+    }
     private Farm() {
         this.animals = new ArrayList<>();
+        initFarm();
         this.inventory = Inventory.getInstance();
         this.hospital = new Hospital(3);
         this.eventLog = new ArrayList<>();
+    }
+
+    private void initFarm() {
+        List<Animal> animals = new ArrayList<>(List.of(
+                new Cow(),
+                new Duck(),
+                new Hen(),
+                new Horse(),
+                new Pig(),
+                new Sheep()
+        ));
+
+        for (var animal : animals) {
+            this.animals.add(animal);
+            new Thread(animal).start();
+        }
     }
 
     public static Farm getInstance() {
@@ -39,14 +68,21 @@ public class Farm {
 
     public void addAnimal(Animal animal) {
         animals.add(animal);
+        new Thread(animal).start();
+    }
+
+    public ArrayList<Animal> getAnimals() {
+        return animals;
     }
 
     public void feed(Animal animal) {
         if (animal.getState() == AnimalState.FULL || animal.getState() == AnimalState.FED_THIRSTY) {
-            throw new RuntimeException("ERROR: Animal is not hungry.");
+            System.out.println("ERROR: Animal is not hungry.");
+            return;
         }
         if (animal.getFoodConsumption() > inventory.getItem(animal.getFoodType())) {
-            throw new RuntimeException("ERROR: Not enough food.");
+            System.out.println("ERROR: Not enough food.");
+            return;
         }
         this.inventory.removeItem(animal.getFoodType(), animal.getFoodConsumption());
         if (animal.getState() == AnimalState.HUNGRY_THIRSTY) {
@@ -58,10 +94,12 @@ public class Farm {
 
     public void giveWater(Animal animal) {
         if (animal.getState() == AnimalState.FULL || animal.getState() == AnimalState.DRENCHED_HUNGRY) {
-            throw new RuntimeException("ERROR: Animal is not thirsty.");
+            System.out.println("ERROR: Animal is not thirsty.");
+            return;
         }
         if (animal.getWaterConsumption() > inventory.getItem(OtherType.WATER)) {
-            throw new RuntimeException("ERROR: Not enough water.");
+            System.out.println("ERROR: Not enough water.");
+            return;
         }
         inventory.removeItem(OtherType.WATER, animal.getWaterConsumption());
         if (animal.getState() == AnimalState.HUNGRY_THIRSTY) {
@@ -73,32 +111,63 @@ public class Farm {
 
     public void heal(Animal animal) {
         if (!animal.getIsSick()) {
-            throw new RuntimeException("ERROR: Animal is not sick");
+            System.out.println("ERROR: Animal is not sick.");
+            return;
         }
         if (animal.getMedicineConsumption() > inventory.getItem(OtherType.MEDICINE)) {
-            throw new RuntimeException("ERROR: Not enough medicine.");
+            System.out.println("ERROR: Not enough medicine.");
+            return;
         }
         inventory.removeItem(OtherType.MEDICINE, animal.getMedicineConsumption());
         animal.setIsSick(false);
     }
 
-    public void buy(OtherType item, int quantity) {
+    public void buy(String animalType, int quantity) {
         if (quantity <= 0) {
-            throw new RuntimeException("ERROR: You must buy a positive amount of " + item);
+            System.out.println("ERROR: You must buy a positive amount of " + animalType);
+            return;
         }
-        if (item.getPrice() * quantity > inventory.getItem(OtherType.MONEY)) {
-            throw new RuntimeException("ERROR: Not enough money.");
+
+        animalType = animalType.toUpperCase();
+        if (!animalPrices.containsKey(animalType)) {
+            System.out.println("ERROR: Invalid animal type.");
+            return;
         }
-        inventory.removeItem(OtherType.MONEY, item.getPrice() * quantity);
-        inventory.addItem(item, quantity);
+
+        int price = animalPrices.get(animalType);
+        int totalCost = price * quantity;
+
+        if (totalCost > inventory.getItem(OtherType.MONEY)) {
+            System.out.println("ERROR: Not enough money.");
+            return;
+        }
+
+        inventory.removeItem(OtherType.MONEY, totalCost);
+
+        for (int i = 0; i < quantity; i++) {
+            System.out.println("WOO hey");
+            Animal animal = switch (animalType) {
+                case "COW" -> new Cow();
+                case "DUCK" -> new Duck();
+                case "GOAT" -> new Goat();
+                case "HEN" -> new Hen();
+                case "HORSE" -> new Horse();
+                case "PIG" -> new Pig();
+                case "SHEEP" -> new Sheep();
+                default -> throw new IllegalStateException("Unexpected value: " + animalType);
+            };
+            addAnimal(animal);
+        }
     }
 
     public void sell(ProductionType production, int quantity) {
         if (quantity <= 0) {
-            throw new RuntimeException("ERROR: You must sell a positive amount of " + production);
+            System.out.println("ERROR: You must sell a positive amount of " + production);
+            return;
         }
         if (inventory.getItem(production) < quantity) {
-            throw new RuntimeException("ERROR: Not enough of this production.");
+            System.out.println("ERROR: Not enough of this production.");
+            return;
         }
         inventory.removeItem(production, quantity);
         inventory.addItem(OtherType.MONEY, production.getPrice() * quantity);
@@ -140,13 +209,13 @@ public class Farm {
         }
 
         if (inventory.getItem(OtherType.FOOD) < 10) {
-            summary.add("Warning: Low on food!");
+            summary.add("WARNING: Low on food!");
         }
         if (inventory.getItem(OtherType.WATER) < 10) {
-            summary.add("Warning: Low on water!");
+            summary.add("WARNING: Low on water!");
         }
         if (inventory.getItem(OtherType.MEDICINE) < 5) {
-            summary.add("Warning: Low on medicine!");
+            summary.add("WARNING: Low on medicine!");
         }
 
         summary.add("Hungry animals: " + hungryAnimals);

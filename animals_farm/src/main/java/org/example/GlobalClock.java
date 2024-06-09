@@ -3,6 +3,7 @@ package org.example;
 import org.example.EndOfDayListener;
 import org.example.enums.SeasonType;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,16 +35,31 @@ public class GlobalClock implements Runnable {
         this.listeners = new ArrayList<>();
     }
 
+    public int getSpeed() {
+        return speed;
+    }
+
     public void addEndOfDayListener(EndOfDayListener listener) {
         listeners.add(listener);
     }
 
+    public synchronized void waitForNextDay() {
+        int currentDay = day;
+        while (day == currentDay) {
+            try {
+                wait();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+    }
     @Override
     public void run() {
         while (!Thread.currentThread().isInterrupted()) {
             try {
                 int speedTime = 1000 / speed;
-                Thread.sleep(speedTime);
+                Thread.sleep(Duration.ofSeconds(speedTime));
                 addSecond();
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -70,6 +86,7 @@ public class GlobalClock implements Runnable {
     }
 
     private void addMinute() {
+        System.out.println(minute);
         if (this.minute < 59) {
             minute++;
         } else {
@@ -92,6 +109,10 @@ public class GlobalClock implements Runnable {
     }
 
     private void addDay() {
+        System.out.println("Day: " + day);
+        synchronized (this) {
+            notifyAll();
+        }
         if (day < getDaysInMonth()) {
             this.day++;
         } else {
@@ -169,7 +190,7 @@ public class GlobalClock implements Runnable {
 
     public static GlobalClock getInstance() {
         if (instance == null) {
-            instance = new GlobalClock(10000000);
+            instance = new GlobalClock(1000);
         }
         return instance;
     }

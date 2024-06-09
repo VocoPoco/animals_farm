@@ -6,12 +6,20 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 public class Hospital {
+    private static Hospital instance;
     private final int capacity;
     private final Queue<Animal> waitingList;
 
     public Hospital(int capacity) {
         this.capacity = capacity;
         this.waitingList = new LinkedList<>();
+    }
+
+    public static Hospital getInstance() {
+        if (instance  == null) {
+            instance = new Hospital(1);
+        }
+        return instance;
     }
 
     public synchronized void admitAnimal(Animal animal) {
