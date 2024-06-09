@@ -20,6 +20,8 @@ public abstract class Animal implements Runnable {
     private final ProductionType productionType;
     private AnimalState state;
     private boolean isSick;
+    private final Farm farm;
+    private final StringBuilder eventLog;
 
     public Animal(int lifespan, double chanceOfGettingSick, int foodConsumption, int waterConsumption, int medicineConsumption, int productionFrequency, int foodQuantityProduction, ProductionType productionType) {
         this.lifespan = lifespan;
@@ -32,6 +34,8 @@ public abstract class Animal implements Runnable {
         this.productionType = productionType;
         this.state = AnimalState.FULL;
         this.isSick = false;
+        this.farm = Farm.getInstance();
+        this.eventLog = new StringBuilder();
     }
 
     public int getLifespan() {
@@ -45,9 +49,11 @@ public abstract class Animal implements Runnable {
     public int getFoodConsumption() {
         return foodConsumption;
     }
+
     public int getWaterConsumption() {
         return waterConsumption;
     }
+
     public int getMedicineConsumption() {
         return medicineConsumption;
     }
@@ -101,12 +107,11 @@ public abstract class Animal implements Runnable {
         int hungryDays = 0;
         int thirstyDays = 0;
         while (!Thread.currentThread().isInterrupted() && daysLived < lifespan && sickDays < 10 && hungryDays < 10 && thirstyDays < 10) {
-            System.out.println(this.getClass().getSimpleName() + " is running.");
             try {
                 checkIfGetsSick();
                 SeasonType currentSeason = GlobalClock.getInstance().getSeason();
                 updateProductivityBasedOnSeason(currentSeason);
-                Farm farm = Farm.getInstance();
+
                 if (!isSick) {
                     sickDays = 0;
                     try {
@@ -120,41 +125,38 @@ public abstract class Animal implements Runnable {
                         thirstyDays++;
                     }
 
-                    System.out.println("Ate and Drank!");
                     if (daysLived % productionFrequency == 0) {
                         Inventory.getInstance().addItem(productionType, foodQuantityProduction);
-                        System.out.println("Produced " + foodQuantityProduction + " " + productionType);
                     }
                 } else {
                     sickDays++;
-                    System.out.println(this.getClass().getSimpleName() + " is sick and cannot produce food today.");
                     try {
-                        farm.getHospital().admit(this);
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        System.out.println(this.getClass().getSimpleName() + " thread was interrupted while trying to get treated.");
+                        farm.getHospital().admitAnimal(this);
+                    } catch (RuntimeException e) {
+                        Thread.sleep(1000);
                     }
                 }
-                Thread.sleep(1000);
+
                 daysLived++;
+                Thread.sleep(1000);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                System.out.println(this.getClass().getSimpleName() + " thread was interrupted.");
             }
         }
 
-        if (hungryDays >= 10) {
-            System.out.println(this.getClass().getSimpleName() + " died of hunger.");
-        }
-        if (thirstyDays >= 10) {
-            System.out.println(this.getClass().getSimpleName() + " died of thirst.");
-        }
-        if (sickDays >= 10) {
-            System.out.println(this.getClass().getSimpleName() + " died of sickness.");
+        if (hungryDays >= 10 || thirstyDays >= 10 || sickDays >= 10) {
+            farm.killAnimal(this);
         }
 
-        if (hungryDays >= 10 || thirstyDays >= 10 || sickDays >= 10) {
-            Farm.getInstance().killAnimal(this);
-        }
+        recordDailySummary(daysLived, sickDays, hungryDays, thirstyDays);
+    }
+
+    private void recordDailySummary(int daysLived, int sickDays, int hungryDays, int thirstyDays) {
+        eventLog.setLength(0);
+        eventLog.append(this.getClass().getSimpleName()).append(" summary - Day: ").append(daysLived)
+                .append(", Sick days: ").append(sickDays)
+                .append(", Hungry days: ").append(hungryDays)
+                .append(", Thirsty days: ").append(thirstyDays);
+        farm.logEvent(eventLog.toString());
     }
 }

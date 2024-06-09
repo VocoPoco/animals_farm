@@ -2,37 +2,42 @@ package org.example.models;
 
 import org.example.models.animals.Animal;
 
-import java.util.concurrent.Semaphore;
+import java.util.LinkedList;
+import java.util.Queue;
 
 public class Hospital {
-    private static Hospital instance;
-    private final Semaphore capacity;
+    private final int capacity;
+    private final Queue<Animal> waitingList;
 
-    public Hospital() {
-        this.capacity = new Semaphore(1, true);
-    }
     public Hospital(int capacity) {
-        this.capacity = new Semaphore(capacity, true);
+        this.capacity = capacity;
+        this.waitingList = new LinkedList<>();
     }
 
-    public static Hospital getInstance() {
-        if (instance == null) {
-            instance = new Hospital();
+    public synchronized void admitAnimal(Animal animal) {
+        while (waitingList.size() >= capacity) {
+            try {
+                wait();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+            }
         }
-        return instance;
+        waitingList.add(animal);
+        notifyAll();
     }
 
-    public void admit(Animal animal) throws InterruptedException {
-        capacity.acquire();
-        try {
-            System.out.println(animal.getClass().getSimpleName() + " is being treated.");
-            Thread.sleep(2000);
-            Farm.getInstance().heal(animal);
-            System.out.println(animal.getClass().getSimpleName() + " has been treated and is leaving the hospital.");
-        } catch (Exception e) {
-            System.out.println("ERROR: Could not treat animal. ");
-        } finally {
-            capacity.release();
+    public synchronized void treatAnimals() {
+        int treatedCount = 0;
+        while (!waitingList.isEmpty() && treatedCount < capacity) {
+            Animal animal = waitingList.poll();
+            animal.setIsSick(false);
+            treatedCount++;
         }
+        notifyAll();
+    }
+
+    public int getWaitingListSize() {
+        return waitingList.size();
     }
 }

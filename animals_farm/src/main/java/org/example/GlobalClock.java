@@ -1,8 +1,11 @@
 package org.example;
 
+import org.example.EndOfDayListener;
 import org.example.enums.SeasonType;
 
-@SuppressWarnings("ALL")
+import java.util.ArrayList;
+import java.util.List;
+
 public class GlobalClock implements Runnable {
     private int second;
     private int minute;
@@ -14,6 +17,7 @@ public class GlobalClock implements Runnable {
     private SeasonType season;
     private final int speed;
     private static GlobalClock instance;
+    private List<EndOfDayListener> listeners;
 
     private static final int[] DAYS_IN_MONTH = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
@@ -27,6 +31,11 @@ public class GlobalClock implements Runnable {
         this.month = 1;
         this.year = 0;
         this.season = SeasonType.SPRING;
+        this.listeners = new ArrayList<>();
+    }
+
+    public void addEndOfDayListener(EndOfDayListener listener) {
+        listeners.add(listener);
     }
 
     @Override
@@ -91,6 +100,9 @@ public class GlobalClock implements Runnable {
         }
         if (day % 7 == 1) {
             addWeek();
+        }
+        if (hour == 0 && minute == 0 && second == 0) {
+            notifyEndOfDayListeners();
         }
     }
 
@@ -157,8 +169,14 @@ public class GlobalClock implements Runnable {
 
     public static GlobalClock getInstance() {
         if (instance == null) {
-            instance = new GlobalClock(10000);
+            instance = new GlobalClock(10000000);
         }
         return instance;
+    }
+
+    private void notifyEndOfDayListeners() {
+        for (EndOfDayListener listener : listeners) {
+            listener.onEndOfDay();
+        }
     }
 }
