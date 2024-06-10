@@ -10,31 +10,29 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.List;
 
-public class Main implements EndOfDayListener {
+public class Main{
     private static Farm farm = Farm.getInstance();
     private static GlobalClock clock = GlobalClock.getInstance();
     private static Thread clockThread;
 
     public static void main(String[] args) {
-        clock.addEndOfDayListener(new Main());
         clockThread = new Thread(clock);
         clockThread.start();
+        System.out.println("Clock started");
 
-        new Thread(() -> {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-            String command;
+        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+        String command;
 
-            while (true) {
-                try {
-                    if (reader.ready()) {
-                        command = reader.readLine().trim();
-                        processPlayerInput(command);
-                    }
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
+        while (true) {
+            try {
+                if (reader.ready()) {
+                    command = reader.readLine().trim();
+                    processPlayerInput(command);
                 }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
-        }).start();
+        }
     }
 
     private static void endGame() {
@@ -87,11 +85,6 @@ public class Main implements EndOfDayListener {
                 System.out.println("Invalid command. Valid commands are: BUY, SELL, STOP, START, END");
                 break;
         }
-    }
-
-    @Override
-    public void onEndOfDay() {
-        printEndOfDaySummary();
     }
 
     private static void printEndOfDaySummary() {

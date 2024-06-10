@@ -1,6 +1,5 @@
 package org.example.models.animals;
 
-import org.example.EndOfDayListener;
 import org.example.GlobalClock;
 import org.example.enums.AnimalState;
 import org.example.enums.ProductionType;
@@ -10,7 +9,7 @@ import org.example.models.Inventory;
 
 import java.util.Random;
 
-public abstract class Animal implements Runnable, EndOfDayListener {
+public abstract class Animal implements Runnable {
     private final int lifespan;
     private final double chanceOfGettingSick;
     private final int foodConsumption;
@@ -114,13 +113,12 @@ public abstract class Animal implements Runnable, EndOfDayListener {
         int sickDays = 0;
         int hungryDays = 0;
         int thirstyDays = 0;
-
-        GlobalClock.getInstance().addEndOfDayListener(this);
+        GlobalClock clock = GlobalClock.getInstance();
 
         while (!Thread.currentThread().isInterrupted() && daysLived < lifespan && sickDays < 10 && hungryDays < 10 && thirstyDays < 10) {
             try {
-                synchronized (this) {
-                    wait();
+                synchronized (clock.getMonitor()) {
+                    clock.getMonitor().wait();
                 }
                 System.out.println("Living day " +  daysLived);
                 checkIfGetsSick();
@@ -162,12 +160,6 @@ public abstract class Animal implements Runnable, EndOfDayListener {
 
         if (hungryDays >= 10 || thirstyDays >= 10 || sickDays >= 10) {
             Farm.getInstance().killAnimal(this);
-        }
-    }
-    @Override
-    public void onEndOfDay() {
-        synchronized (this) {
-            notify();
         }
     }
 }

@@ -1,13 +1,12 @@
 package org.example;
 
-import org.example.EndOfDayListener;
 import org.example.enums.SeasonType;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
 public class GlobalClock implements Runnable {
+    private final Object monitor = new Object();
     private int second;
     private int minute;
     private int hour;
@@ -18,7 +17,6 @@ public class GlobalClock implements Runnable {
     private SeasonType season;
     private final int speed;
     private static GlobalClock instance;
-    private List<EndOfDayListener> listeners;
 
     private static final int[] DAYS_IN_MONTH = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
@@ -32,16 +30,12 @@ public class GlobalClock implements Runnable {
         this.month = 1;
         this.year = 0;
         this.season = SeasonType.SPRING;
-        this.listeners = new ArrayList<>();
     }
 
     public int getSpeed() {
         return speed;
     }
 
-    public void addEndOfDayListener(EndOfDayListener listener) {
-        listeners.add(listener);
-    }
 
     public synchronized void waitForNextDay() {
         int currentDay = day;
@@ -59,8 +53,9 @@ public class GlobalClock implements Runnable {
         while (!Thread.currentThread().isInterrupted()) {
             try {
                 int speedTime = 1000 / speed;
-                Thread.sleep(Duration.ofSeconds(speedTime));
+                Thread.sleep(speedTime);
                 addSecond();
+                System.out.println(second);
             } catch (InterruptedException e) {
                 e.printStackTrace();
                 Thread.currentThread().interrupt();
@@ -73,11 +68,14 @@ public class GlobalClock implements Runnable {
     }
 
     private void addSecond() {
-        if (this.second < 59) {
-            second++;
-        } else {
-            addMinute();
-            this.second = 0;
+        synchronized (monitor) {  // Use the monitor object
+            if (this.second < 59) {
+                second++;
+            } else {
+                addMinute();
+                this.second = 0;
+            }
+            monitor.notifyAll();
         }
     }
 
@@ -110,9 +108,6 @@ public class GlobalClock implements Runnable {
 
     private void addDay() {
         System.out.println("Day: " + day);
-        synchronized (this) {
-            notifyAll();
-        }
         if (day < getDaysInMonth()) {
             this.day++;
         } else {
@@ -121,9 +116,6 @@ public class GlobalClock implements Runnable {
         }
         if (day % 7 == 1) {
             addWeek();
-        }
-        if (hour == 0 && minute == 0 && second == 0) {
-            notifyEndOfDayListeners();
         }
     }
 
@@ -190,14 +182,12 @@ public class GlobalClock implements Runnable {
 
     public static GlobalClock getInstance() {
         if (instance == null) {
-            instance = new GlobalClock(1000);
+            instance = new GlobalClock(1);
         }
         return instance;
     }
 
-    private void notifyEndOfDayListeners() {
-        for (EndOfDayListener listener : listeners) {
-            listener.onEndOfDay();
-        }
+    public Object getMonitor() {
+        return monitor;
     }
 }
