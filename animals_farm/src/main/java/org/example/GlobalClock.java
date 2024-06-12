@@ -2,29 +2,20 @@ package org.example;
 
 import org.example.enums.SeasonType;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class GlobalClock implements Runnable {
     private final Object monitor = new Object();
-    private int second;
-    private int minute;
-    private int hour;
     private int day;
     private int week;
     private int month;
     private int year;
     private SeasonType season;
-    private final int speed;
+    private final double speed;
     private static GlobalClock instance;
 
     private static final int[] DAYS_IN_MONTH = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
-    private GlobalClock(int speed) {
+    private GlobalClock(double speed) {
         this.speed = speed;
-        this.second = 0;
-        this.minute = 0;
-        this.hour = 0;
         this.day = 1;
         this.week = 1;
         this.month = 1;
@@ -32,30 +23,17 @@ public class GlobalClock implements Runnable {
         this.season = SeasonType.SPRING;
     }
 
-    public int getSpeed() {
+    public double getSpeed() {
         return speed;
     }
 
-
-    public synchronized void waitForNextDay() {
-        int currentDay = day;
-        while (day == currentDay) {
-            try {
-                wait();
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break;
-            }
-        }
-    }
     @Override
     public void run() {
         while (!Thread.currentThread().isInterrupted()) {
             try {
-                int speedTime = 1000 / speed;
+                int speedTime = (int) (1000 / speed);
                 Thread.sleep(speedTime);
-                addSecond();
-                System.out.println(second);
+                addDay();
             } catch (InterruptedException e) {
                 e.printStackTrace();
                 Thread.currentThread().interrupt();
@@ -63,59 +41,18 @@ public class GlobalClock implements Runnable {
         }
     }
 
-    public int getSecond() {
-        return second;
-    }
-
-    private void addSecond() {
-        synchronized (monitor) {  // Use the monitor object
-            if (this.second < 59) {
-                second++;
+    private void addDay() {
+        synchronized (monitor) {
+            if (day < getDaysInMonth()) {
+                this.day++;
             } else {
-                addMinute();
-                this.second = 0;
+                addMonth();
+                this.day = 1;
+            }
+            if (day % 7 == 1) {
+                addWeek();
             }
             monitor.notifyAll();
-        }
-    }
-
-    public int getMinute() {
-        return minute;
-    }
-
-    private void addMinute() {
-        System.out.println(minute);
-        if (this.minute < 59) {
-            minute++;
-        } else {
-            addHour();
-            this.minute = 0;
-        }
-    }
-
-    public int getHour() {
-        return hour;
-    }
-
-    private void addHour() {
-        if (hour < 23) {
-            hour++;
-        } else {
-            addDay();
-            hour = 0;
-        }
-    }
-
-    private void addDay() {
-        System.out.println("Day: " + day);
-        if (day < getDaysInMonth()) {
-            this.day++;
-        } else {
-            addMonth();
-            this.day = 1;
-        }
-        if (day % 7 == 1) {
-            addWeek();
         }
     }
 
@@ -182,7 +119,7 @@ public class GlobalClock implements Runnable {
 
     public static GlobalClock getInstance() {
         if (instance == null) {
-            instance = new GlobalClock(1);
+            instance = new GlobalClock(0.2);  // Example speed
         }
         return instance;
     }

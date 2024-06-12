@@ -1,6 +1,5 @@
 package org.example.models;
 
-import org.example.enums.AnimalState;
 import org.example.enums.OtherType;
 import org.example.enums.ProductionType;
 import org.example.models.animals.*;
@@ -48,6 +47,7 @@ public class Farm {
         for (var animal : animals) {
             this.animals.add(animal);
             new Thread(animal).start();
+            System.out.println(animal + "thread started");
         }
     }
 
@@ -76,37 +76,10 @@ public class Farm {
     }
 
     public void feed(Animal animal) {
-        if (animal.getState() == AnimalState.FULL || animal.getState() == AnimalState.FED_THIRSTY) {
-            System.out.println("ERROR: Animal is not hungry.");
-            return;
-        }
-        if (animal.getFoodConsumption() > inventory.getItem(animal.getFoodType())) {
-            System.out.println("ERROR: Not enough food.");
-            return;
-        }
-        this.inventory.removeItem(animal.getFoodType(), animal.getFoodConsumption());
-        if (animal.getState() == AnimalState.HUNGRY_THIRSTY) {
-            animal.setState(AnimalState.FED_THIRSTY);
-        } else {
-            animal.setState(AnimalState.FULL);
-        }
+        this.inventory.removeItem(OtherType.FOOD, animal.getFoodConsumption());
     }
-
     public void giveWater(Animal animal) {
-        if (animal.getState() == AnimalState.FULL || animal.getState() == AnimalState.DRENCHED_HUNGRY) {
-            System.out.println("ERROR: Animal is not thirsty.");
-            return;
-        }
-        if (animal.getWaterConsumption() > inventory.getItem(OtherType.WATER)) {
-            System.out.println("ERROR: Not enough water.");
-            return;
-        }
-        inventory.removeItem(OtherType.WATER, animal.getWaterConsumption());
-        if (animal.getState() == AnimalState.HUNGRY_THIRSTY) {
-            animal.setState(AnimalState.DRENCHED_HUNGRY);
-        } else {
-            animal.setState(AnimalState.FULL);
-        }
+        this.inventory.removeItem(OtherType.WATER, animal.getWaterConsumption());
     }
 
     public void heal(Animal animal) {
@@ -182,7 +155,7 @@ public class Farm {
         eventLog.add(event);
     }
 
-    public List<String> getDailySummary() {
+    public List<String> getWeeklySummary() {
         List<String> summary = new ArrayList<>();
         int hungryAnimals = 0;
         int thirstyAnimals = 0;
@@ -191,10 +164,10 @@ public class Farm {
         int waitingForHospital = hospital.getWaitingListSize();
 
         for (Animal animal : animals) {
-            if (animal.getState() == AnimalState.HUNGRY_THIRSTY || animal.getState() == AnimalState.DRENCHED_HUNGRY) {
+            if (animal.isHungry()) {
                 hungryAnimals++;
             }
-            if (animal.getState() == AnimalState.FED_THIRSTY || animal.getState() == AnimalState.HUNGRY_THIRSTY) {
+            if (animal.isThirsty()) {
                 thirstyAnimals++;
             }
             if (animal.getIsSick()) {

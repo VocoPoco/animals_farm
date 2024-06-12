@@ -1,9 +1,7 @@
 package org.example;
 
-import org.example.enums.OtherType;
 import org.example.enums.ProductionType;
 import org.example.models.Farm;
-import org.example.models.animals.*;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -22,15 +20,17 @@ public class Main{
 
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
         String command;
-
         while (true) {
             try {
                 if (reader.ready()) {
                     command = reader.readLine().trim();
                     processPlayerInput(command);
                 }
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+                Thread.sleep(100);
+            } catch (IOException | InterruptedException e) {
+                Thread.currentThread().interrupt();
+                e.printStackTrace();
+                break;
             }
         }
     }
@@ -88,7 +88,7 @@ public class Main{
     }
 
     private static void printEndOfDaySummary() {
-        List<String> summary = farm.getDailySummary();
+        List<String> summary = farm.getWeeklySummary();
         System.out.println("End of Day Summary:");
         for (String line : summary) {
             System.out.println(line);
