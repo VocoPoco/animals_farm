@@ -1,6 +1,5 @@
 package org.example.models;
 
-import org.example.enums.AnimalState;
 import org.example.enums.OtherType;
 import org.example.enums.ProductionType;
 import org.example.models.animals.*;
@@ -8,6 +7,7 @@ import org.example.models.animals.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Random;
 
 public class Farm {
     private static Farm instance;
@@ -15,6 +15,7 @@ public class Farm {
     private final Inventory inventory;
     private final Hospital hospital;
     private final List<String> eventLog;
+    private static final HashMap<String, Integer> animalCounts = new HashMap<>();
 
     private static final HashMap<String, Integer> animalPrices = new HashMap<>();
 
@@ -26,7 +27,16 @@ public class Farm {
         animalPrices.put("HORSE", 150);
         animalPrices.put("PIG", 70);
         animalPrices.put("SHEEP", 60);
+
+        animalCounts.put("COW", 0);
+        animalCounts.put("DUCK", 0);
+        animalCounts.put("GOAT", 0);
+        animalCounts.put("HEN", 0);
+        animalCounts.put("HORSE", 0);
+        animalCounts.put("PIG", 0);
+        animalCounts.put("SHEEP", 0);
     }
+
     private Farm() {
         this.animals = new ArrayList<>();
         initFarm();
@@ -37,17 +47,38 @@ public class Farm {
 
     private void initFarm() {
         List<Animal> animals = new ArrayList<>(List.of(
-                new Cow(),
-                new Duck(),
-                new Hen(),
-                new Horse(),
-                new Pig(),
-                new Sheep()
+                new Cow(0),
+                new Duck(0),
+                new Hen(0),
+                new Horse(0),
+                new Pig(0),
+                new Sheep(0)
         ));
 
         for (var animal : animals) {
             this.animals.add(animal);
+            incrementAnimalCount(animal);
             new Thread(animal).start();
+        }
+    }
+
+    private void incrementAnimalCount(Animal animal) {
+        String animalType = animal.getClass().getSimpleName().toUpperCase();
+        animalCounts.put(animalType, animalCounts.get(animalType) + 1);
+    }
+
+    private void decrementAnimalCount(Animal animal) {
+        String animalType = animal.getClass().getSimpleName().toUpperCase();
+        animalCounts.put(animalType, animalCounts.get(animalType) - 1);
+    }
+
+    public void printFarm() {
+        for (String animalType : animalCounts.keySet()) {
+            System.out.println("Animal type: " + animalType + ", Count: " + animalCounts.get(animalType));
+        }
+        System.out.println("\n");
+        for(Animal animal : animals) {
+            System.out.println(animal.getAnimalInfo());
         }
     }
 
@@ -68,6 +99,7 @@ public class Farm {
 
     public void addAnimal(Animal animal) {
         animals.add(animal);
+        incrementAnimalCount(animal);
         new Thread(animal).start();
     }
 
@@ -76,7 +108,7 @@ public class Farm {
     }
 
     public void feed(Animal animal) {
-        if (animal.getState() == AnimalState.FULL || animal.getState() == AnimalState.FED_THIRSTY) {
+        if (!animal.getIsHungry()) {
             System.out.println("ERROR: Animal is not hungry.");
             return;
         }
@@ -84,16 +116,12 @@ public class Farm {
             System.out.println("ERROR: Not enough food.");
             return;
         }
-        this.inventory.removeItem(animal.getFoodType(), animal.getFoodConsumption());
-        if (animal.getState() == AnimalState.HUNGRY_THIRSTY) {
-            animal.setState(AnimalState.FED_THIRSTY);
-        } else {
-            animal.setState(AnimalState.FULL);
-        }
+        this.inventory.removeItem(OtherType.FOOD, animal.getFoodConsumption());
+        animal.setIsHungry(false);
     }
 
     public void giveWater(Animal animal) {
-        if (animal.getState() == AnimalState.FULL || animal.getState() == AnimalState.DRENCHED_HUNGRY) {
+        if (!animal.getIsThirsty()) {
             System.out.println("ERROR: Animal is not thirsty.");
             return;
         }
@@ -102,14 +130,10 @@ public class Farm {
             return;
         }
         inventory.removeItem(OtherType.WATER, animal.getWaterConsumption());
-        if (animal.getState() == AnimalState.HUNGRY_THIRSTY) {
-            animal.setState(AnimalState.DRENCHED_HUNGRY);
-        } else {
-            animal.setState(AnimalState.FULL);
-        }
+        animal.setIsThirsty(false);
     }
 
-    public void heal(Animal animal) {
+    public void putAnimalInHospital(Animal animal) {
         if (!animal.getIsSick()) {
             System.out.println("ERROR: Animal is not sick.");
             return;
@@ -119,45 +143,84 @@ public class Farm {
             return;
         }
         inventory.removeItem(OtherType.MEDICINE, animal.getMedicineConsumption());
-        animal.setIsSick(false);
+        hospital.admitAnimal(animal);
     }
 
-    public void buy(String animalType, int quantity) {
+    private int generateID() {
+        return new Random().nextInt(10);
+    }
+
+    public void buy(String item, int quantity) {
         if (quantity <= 0) {
-            System.out.println("ERROR: You must buy a positive amount of " + animalType);
+            System.out.println("ERROR: You must buy a positive amount of " + item);
             return;
         }
 
-        animalType = animalType.toUpperCase();
-        if (!animalPrices.containsKey(animalType)) {
-            System.out.println("ERROR: Invalid animal type.");
-            return;
+        item = item.toUpperCase();
+        int totalCost = 0;
+
+        if (animalPrices.containsKey(item)) {
+            int price = animalPrices.get(item);
+            totalCost = price * quantity;
+
+            if (totalCost > inventory.getItem(OtherType.MONEY)) {
+                System.out.println("ERROR: Not enough money.");
+                return;
+            }
+
+            inventory.removeItem(OtherType.MONEY, totalCost);
+
+            for (int i = 0; i < quantity; i++) {
+                int id;
+                do {
+                    id = generateID();
+                } while (!checkIfIdIsUnique(item, id));
+
+                Animal animal = switch (item) {
+                    case "COW" -> new Cow(id);
+                    case "DUCK" -> new Duck(id);
+                    case "GOAT" -> new Goat(id);
+                    case "HEN" -> new Hen(id);
+                    case "HORSE" -> new Horse(id);
+                    case "PIG" -> new Pig(id);
+                    case "SHEEP" -> new Sheep(id);
+                    default -> throw new IllegalStateException("Unexpected value: " + item);
+                };
+                addAnimal(animal);
+            }
+        } else {
+            OtherType otherType;
+            switch (item) {
+                case "FOOD" -> otherType = OtherType.FOOD;
+                case "WATER" -> otherType = OtherType.WATER;
+                case "MEDICINE" -> otherType = OtherType.MEDICINE;
+                default -> {
+                    System.out.println("ERROR: Invalid item type.");
+                    return;
+                }
+            }
+
+            totalCost = otherType.getPrice() * quantity;
+
+            if (totalCost > inventory.getItem(OtherType.MONEY)) {
+                System.out.println("ERROR: Not enough money.");
+                return;
+            }
+
+            inventory.removeItem(OtherType.MONEY, totalCost);
+            inventory.addItem(otherType, quantity);
         }
+    }
 
-        int price = animalPrices.get(animalType);
-        int totalCost = price * quantity;
-
-        if (totalCost > inventory.getItem(OtherType.MONEY)) {
-            System.out.println("ERROR: Not enough money.");
-            return;
+    public boolean checkIfIdIsUnique(String animalType, int id) {
+        for(Animal animal : animals) {
+            if(animal.getClass().getSimpleName() == animalType) {
+                if(animal.getId() == id) {
+                    return false;
+                }
+            }
         }
-
-        inventory.removeItem(OtherType.MONEY, totalCost);
-
-        for (int i = 0; i < quantity; i++) {
-            System.out.println("WOO hey");
-            Animal animal = switch (animalType) {
-                case "COW" -> new Cow();
-                case "DUCK" -> new Duck();
-                case "GOAT" -> new Goat();
-                case "HEN" -> new Hen();
-                case "HORSE" -> new Horse();
-                case "PIG" -> new Pig();
-                case "SHEEP" -> new Sheep();
-                default -> throw new IllegalStateException("Unexpected value: " + animalType);
-            };
-            addAnimal(animal);
-        }
+        return true;
     }
 
     public void sell(ProductionType production, int quantity) {
@@ -175,6 +238,7 @@ public class Farm {
 
     public void killAnimal(Animal animal) {
         animals.remove(animal);
+        decrementAnimalCount(animal);
         logEvent(animal.getClass().getSimpleName() + " has died.");
     }
 
@@ -191,10 +255,10 @@ public class Farm {
         int waitingForHospital = hospital.getWaitingListSize();
 
         for (Animal animal : animals) {
-            if (animal.getState() == AnimalState.HUNGRY_THIRSTY || animal.getState() == AnimalState.DRENCHED_HUNGRY) {
+            if (animal.getIsHungry()) {
                 hungryAnimals++;
             }
-            if (animal.getState() == AnimalState.FED_THIRSTY || animal.getState() == AnimalState.HUNGRY_THIRSTY) {
+            if (animal.getIsThirsty()) {
                 thirstyAnimals++;
             }
             if (animal.getIsSick()) {

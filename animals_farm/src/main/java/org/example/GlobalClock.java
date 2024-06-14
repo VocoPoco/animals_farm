@@ -52,10 +52,9 @@ public class GlobalClock implements Runnable {
     public void run() {
         while (!Thread.currentThread().isInterrupted()) {
             try {
-                int speedTime = 1000 / speed;
+                int speedTime = 10000 / speed;
                 Thread.sleep(speedTime);
                 addSecond();
-                System.out.println(second);
             } catch (InterruptedException e) {
                 e.printStackTrace();
                 Thread.currentThread().interrupt();

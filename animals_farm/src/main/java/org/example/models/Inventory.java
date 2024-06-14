@@ -23,7 +23,7 @@ public class Inventory {
             if (type.equals(OtherType.MONEY)) {
                 inventory.put(type, 1000);
             } else {
-                inventory.put(type, 10);
+                inventory.put(type, 100);
             }
         }
     }
