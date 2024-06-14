@@ -67,7 +67,7 @@ public class GlobalClock implements Runnable {
     }
 
     private void addSecond() {
-        synchronized (monitor) {  // Use the monitor object
+        synchronized (monitor) {
             if (this.second < 59) {
                 second++;
             } else {

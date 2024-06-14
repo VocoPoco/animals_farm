@@ -153,6 +153,7 @@ public abstract class Animal implements Runnable {
         //malko da se slojat entery za da e po-chetimo!
         //da se napravi da mogat da se kupuvat i drugi neshta - gotovo
         //da se zanulqvat dnite na glad i jajda - gotovo
+        //da se polzva toq resetDailyLog vuv Farm class-a
         int daysLived = 0;
         int sickDays = 0;
         int hungryDays = 0;

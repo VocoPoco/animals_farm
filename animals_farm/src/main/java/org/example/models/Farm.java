@@ -52,10 +52,11 @@ public class Farm {
                 new Hen(0),
                 new Horse(0),
                 new Pig(0),
+                new Goat(0),
                 new Sheep(0)
         ));
 
-        for (var animal : animals) {
+        for (Animal animal : animals) {
             this.animals.add(animal);
             incrementAnimalCount(animal);
             new Thread(animal).start();
