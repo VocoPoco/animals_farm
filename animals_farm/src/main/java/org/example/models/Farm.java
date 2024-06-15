@@ -37,23 +37,30 @@ public class Farm {
         animalCounts.put("SHEEP", 0);
     }
 
+    public static Farm getInstance() {
+        if (instance == null) {
+            instance = new Farm();
+        }
+        return instance;
+    }
+
     private Farm() {
         this.animals = new ArrayList<>();
-        initFarm();
         this.inventory = Inventory.getInstance();
         this.hospital = new Hospital(3);
         this.eventLog = new ArrayList<>();
+        initFarm();
     }
 
     private void initFarm() {
         List<Animal> animals = new ArrayList<>(List.of(
                 new Cow(0),
-                new Duck(0),
-                new Hen(0),
-                new Horse(0),
-                new Pig(0),
-                new Goat(0),
-                new Sheep(0)
+                new Duck(0)
+//                new Hen(0),
+//                new Horse(0),
+//                new Pig(0),
+//                new Goat(0),
+//                new Sheep(0)
         ));
 
         for (Animal animal : animals) {
@@ -83,13 +90,6 @@ public class Farm {
         }
     }
 
-    public static Farm getInstance() {
-        if (instance == null) {
-            instance = new Farm();
-        }
-        return instance;
-    }
-
     public Hospital getHospital() {
         return hospital;
     }
@@ -113,7 +113,7 @@ public class Farm {
             System.out.println("ERROR: Animal is not hungry.");
             return;
         }
-        if (animal.getFoodConsumption() > inventory.getItem(animal.getFoodType())) {
+        if (animal.getFoodConsumption() > inventory.getItem(OtherType.FOOD)) {
             System.out.println("ERROR: Not enough food.");
             return;
         }
@@ -214,9 +214,9 @@ public class Farm {
     }
 
     public boolean checkIfIdIsUnique(String animalType, int id) {
-        for(Animal animal : animals) {
-            if(animal.getClass().getSimpleName() == animalType) {
-                if(animal.getId() == id) {
+        for (Animal animal : animals) {
+            if (animal.getClass().getSimpleName().equalsIgnoreCase(animalType)) {
+                if (animal.getId() == id) {
                     return false;
                 }
             }

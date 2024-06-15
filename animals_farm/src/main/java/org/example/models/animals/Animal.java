@@ -108,24 +108,9 @@ public abstract class Animal implements Runnable {
 
     private void checkIfGetsSick() {
         Random random = new Random();
-        if (random.nextDouble() < chanceOfGettingSick) {
+        if (random.nextDouble(10) < chanceOfGettingSick) {
             System.out.println("Animal got sick.");
             setIsSick(true);
-        }
-    }
-    private void determineState(int hungryDays, int thirstyDays) {
-        if (hungryDays != 0 && thirstyDays != 0) {
-            setIsHungry(true);
-            setIsThirsty(true);
-        } else if (hungryDays != 0) {
-            setIsHungry(true);
-            setIsThirsty(false);
-        } else if (thirstyDays != 0) {
-            setIsHungry(false);
-            setIsThirsty(true);
-        } else {
-            setIsHungry(false);
-            setIsThirsty(false);
         }
     }
 
@@ -145,93 +130,95 @@ public abstract class Animal implements Runnable {
 
     }
 
+    @Override
     public void run() {
-        //da proizvejdat neshto
-        //da pravqt vsichki jivotni neshtata ednovremenno
-        //kogato ovcata umre pri printiraneto na fermata broqt e 0 no kogato kupq nova ovca tq pochva da jivee da qde i tn
-        //no vuv fermata stavat 2 ovcete veche?????
-        //malko da se slojat entery za da e po-chetimo!
-        //da se napravi da mogat da se kupuvat i drugi neshta - gotovo
-        //da se zanulqvat dnite na glad i jajda - gotovo
-        //da se polzva toq resetDailyLog vuv Farm class-a
         int daysLived = 0;
         int sickDays = 0;
         int hungryDays = 0;
         int thirstyDays = 0;
         GlobalClock clock = GlobalClock.getInstance();
+        Farm farm = Farm.getInstance();
 
-        while (!Thread.currentThread().isInterrupted() && daysLived < lifespan && sickDays < 5 && hungryDays < 5 && thirstyDays < 5) {
+        while (!Thread.currentThread().isInterrupted() && daysLived < lifespan) {
             try {
-                synchronized (clock.getMonitor()) {
-                    clock.getMonitor().wait();
-                }
-                System.out.println("Living day " +  daysLived);
-                checkIfGetsSick();
-                SeasonType currentSeason = GlobalClock.getInstance().getSeason();
-                updateProductivityBasedOnSeason(currentSeason);
+//                synchronized (clock.getMonitor()) {
+//                    clock.getMonitor().wait();
+//                }
 
-                if (!this.isSick) {
-                    sickDays = 0;
-                    if(this.isHungry) {
+                System.out.println(this.getClass().getSimpleName() + " with ID: " + this.id + " is living day " + daysLived);
+
+                checkIfGetsSick();
+                SeasonType currentSeason = clock.getSeason();
+                updateProductivityBasedOnSeason(currentSeason);
+                if (!isSick) {
+                    if (isHungry) {
                         System.out.println(this.getClass().getSimpleName() + " with ID: " + this.id + " is hungry.");
-                        try {
-                            System.out.println("Trying to feed animal.");
-                            Farm.getInstance().feed(this);
+                        synchronized (farm) {
+                            farm.feed(this);
+                        }
+                        if(!isHungry) {
                             hungryDays = 0;
-                        } catch (RuntimeException e) {
+                            System.out.println(this.getClass().getSimpleName() + " with ID: " + this.id + " ate!");
+                        } else {
                             hungryDays++;
                         }
                     }
-                    System.out.println(this.getClass().getSimpleName() + " with ID: " + this.id + " ate!");
-                    if(this.isThirsty) {
+                    if (isThirsty) {
                         System.out.println(this.getClass().getSimpleName() + " with ID: " + this.id + " is thirsty.");
-                        try {
-                            System.out.println("Trying to give animal water.");
-                            Farm.getInstance().giveWater(this);
+                        synchronized (farm) {
+                            farm.giveWater(this);
+                        }
+                        if(!isThirsty) {
                             thirstyDays = 0;
-                        } catch (RuntimeException e) {
+                            System.out.println(this.getClass().getSimpleName() + " with ID: " + this.id + " drank!");
+                        } else {
                             thirstyDays++;
                         }
-                        System.out.println(this.getClass().getSimpleName() + " with ID: " + this.id + " drank!");
                     }
                 } else {
                     System.out.println(this.getClass().getSimpleName() + " with ID: " + this.id + " is sick.");
-                    sickDays++;
-                    try {
-                        System.out.println("Trying to put animal in hospital.");
-                        Farm.getInstance().putAnimalInHospital(this);
-                        System.out.println(this.getClass().getSimpleName() + "with ID: " + this.id + " is not sick anymore.");
-                    } catch (RuntimeException e) {
-                        Thread.sleep(1000);
+                    synchronized (farm) {
+                        farm.putAnimalInHospital(this);
+                    }
+                    if(!isSick) {
+                        sickDays = 0;
+                        System.out.println(this.getClass().getSimpleName() + " with ID: " + this.id + " is not sick anymore.");
+                    } else {
+                        sickDays++;
                     }
                 }
-                determineState(hungryDays, thirstyDays);
                 daysLived++;
-                this.setIsHungry(true);
-                this.setIsThirsty(true);
+                setIsHungry(true);
+                setIsThirsty(true);
                 System.out.println("--- SUMMARY OF THE DAY: ---");
-                System.out.println(Farm.getInstance().getDailySummary());
+                synchronized (farm) {
+                    System.out.println(farm.getDailySummary());
+                }
                 System.out.println("\n");
-                Thread.sleep(1000);
+                if (hungryDays >= 3) {
+                    System.out.println(this.getClass().getSimpleName() + " with ID: " + this.id + " died of hunger.");
+                    synchronized (farm) {
+                        farm.killAnimal(this);
+                    }
+                    Thread.currentThread().interrupt();
+                } else if (thirstyDays >= 3) {
+                    System.out.println(this.getClass().getSimpleName() + " with ID: " + this.id + " died of thirst.");
+                    synchronized (farm) {
+                        farm.killAnimal(this);
+                    }
+                    Thread.currentThread().interrupt();
+                } else if (sickDays >= 3) {
+                    System.out.println(this.getClass().getSimpleName() + " with ID: " + this.id + " died of sickness.");
+                    synchronized (farm) {
+                        farm.killAnimal(this);
+                    }
+                    Thread.currentThread().interrupt();
+                }
+                Thread.sleep(10000);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
         }
-
-        if (hungryDays >= 3) {
-            System.out.println(this.getClass().getSimpleName() + "with ID: " + this.id + " died of hunger.");
-            Farm.getInstance().killAnimal(this);
-        }
-        if (thirstyDays >= 3) {
-            System.out.println(this.getClass().getSimpleName() + "with ID: " + this.id + " died of thirst.");
-        }
-        if (sickDays >= 3) {
-            System.out.println(this.getClass().getSimpleName() + "with ID: " + this.id + " died of sickness.");
-            Farm.getInstance().killAnimal(this);
-        }
-        else {
-            System.out.println(this.getClass().getSimpleName() + " with ID: " + this.id + " died.");
-            Farm.getInstance().killAnimal(this);
-        }
+        System.out.println(this.getClass().getSimpleName() + " with ID: " + this.id + " died.");
     }
 }

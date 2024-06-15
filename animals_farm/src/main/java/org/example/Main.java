@@ -1,14 +1,11 @@
 package org.example;
 
-import org.example.enums.OtherType;
 import org.example.enums.ProductionType;
 import org.example.models.Farm;
-import org.example.models.animals.*;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.List;
 
 public class Main{
     private static Farm farm = Farm.getInstance();
