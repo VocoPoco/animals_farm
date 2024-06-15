@@ -6,11 +6,10 @@ import org.example.models.Farm;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.List;
 
 public class Main{
-    private static Farm farm = Farm.getInstance();
     private static GlobalClock clock = GlobalClock.getInstance();
+    private static Farm farm = Farm.getInstance();
     private static Thread clockThread;
 
     public static void main(String[] args) {
@@ -18,21 +17,20 @@ public class Main{
         clockThread.start();
         System.out.println("Clock started");
 
-        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+        /*BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
         String command;
+        *//*
         while (true) {
             try {
                 if (reader.ready()) {
                     command = reader.readLine().trim();
                     processPlayerInput(command);
                 }
-                Thread.sleep(100);
-            } catch (IOException | InterruptedException e) {
-                Thread.currentThread().interrupt();
-                e.printStackTrace();
-                break;
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
         }
+         */
     }
 
     private static void endGame() {
@@ -56,14 +54,13 @@ public class Main{
             case "BUY":
                 if (!item.isEmpty() && quantity > 0) {
                     try {
-                        System.out.println("hey");
                         farm.buy(item, quantity);
                         System.out.println("Bought " + quantity + " " + item);
                     } catch (Exception e) {
                         System.out.println("Error: " + e.getMessage());
                     }
                 } else {
-                    System.out.println("Invalid BUY command. Usage: BUY <animal> <quantity>");
+                    System.out.println("Invalid BUY command. Usage: BUY <item> <quantity>");
                 }
                 break;
             case "SELL":
@@ -81,18 +78,15 @@ public class Main{
             case "END":
                 endGame();
                 break;
+            case "INVENTORY":
+                farm.getInventory().printInventory();
+                break;
+            case "FARM":
+                farm.printFarm();
+                break;
             default:
-                System.out.println("Invalid command. Valid commands are: BUY, SELL, STOP, START, END");
+                System.out.println("Invalid command. Valid commands are: BUY, SELL, END, INVENTORY, FARM");
                 break;
         }
-    }
-
-    private static void printEndOfDaySummary() {
-        List<String> summary = farm.getWeeklySummary();
-        System.out.println("End of Day Summary:");
-        for (String line : summary) {
-            System.out.println(line);
-        }
-        farm.resetDailyLog();
     }
 }

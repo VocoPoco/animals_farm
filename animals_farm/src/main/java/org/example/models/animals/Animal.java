@@ -5,92 +5,41 @@ import org.example.enums.ProductionType;
 import org.example.enums.SeasonType;
 import org.example.models.Farm;
 import org.example.models.Inventory;
-import org.example.enums.AnimalState;
 
-
+import java.sql.SQLOutput;
 import java.util.Random;
 
 public abstract class Animal implements Runnable {
+    private int id;
     private final int lifespan;
     private final double chanceOfGettingSick;
     private final int foodConsumption;
     private final int waterConsumption;
     private final int medicineConsumption;
     private final int productionFrequency;
-    private int productionQuantity;
+    private int foodQuantityProduction;
     private final ProductionType productionType;
-    private boolean isThirsty;
     private boolean isHungry;
+    private boolean isThirsty;
     private boolean isSick;
 
-    public Animal(int lifespan, double chanceOfGettingSick, int foodConsumption, int waterConsumption, int medicineConsumption, int productionFrequency, int productionQuantity, ProductionType productionType) {
+    public Animal(int id, int lifespan, double chanceOfGettingSick, int foodConsumption, int waterConsumption, int medicineConsumption, int productionFrequency, int foodQuantityProduction, ProductionType productionType) {
+        this.id = id;
         this.lifespan = lifespan;
         this.chanceOfGettingSick = chanceOfGettingSick;
         this.foodConsumption = foodConsumption;
         this.waterConsumption = waterConsumption;
         this.medicineConsumption = medicineConsumption;
         this.productionFrequency = productionFrequency;
-        this.productionQuantity = productionQuantity;
+        this.foodQuantityProduction = foodQuantityProduction;
         this.productionType = productionType;
-        this.isThirsty = false;
-        this.isHungry = false;
+        this.isHungry = true;
+        this.isThirsty = true;
         this.isSick = false;
     }
-    public void run() {
-        int daysLived = 0;
-        int sickDays = 0;
-        int hungryDays = 0;
-        int thirstyDays = 0;
-        GlobalClock clock = GlobalClock.getInstance();
 
-        while (!Thread.currentThread().isInterrupted() && (daysLived / 365) < lifespan && sickDays < 10 && hungryDays < 10 && thirstyDays < 10) {
-            try {
-                synchronized (clock.getMonitor()) {
-                    clock.getMonitor().wait();
-                }
-                System.out.println("Living day " +  daysLived + "as" + Thread.currentThread().getName());
-                // randomized getting sick
-                checkIfGetsSick();
-                // gets productivity depending on the season
-                SeasonType currentSeason = GlobalClock.getInstance().getSeason();
-                updateProductivityBasedOnSeason(currentSeason);
-
-                if (!isSick) {
-                    sickDays = 0;
-                    try {
-                        Farm.getInstance().feed(this);
-                    } catch (RuntimeException e) {
-                        hungryDays++;
-                        setHungry(true);
-                    }
-                    try {
-                        Farm.getInstance().giveWater(this);
-                    } catch (RuntimeException e) {
-                        setThirsty(true);
-                        thirstyDays++;
-                    }
-                    if (daysLived % productionFrequency == 0) {
-                        Farm.getInstance().getInventory().addItem(productionType, productionQuantity);
-                        System.out.println("Produced " + productionType);
-                    }
-                } else {
-                    sickDays++;
-                    try {
-                        Farm.getInstance().getHospital().admitAnimal(this);
-                    } catch (RuntimeException e) {
-                        Thread.sleep(1000);
-                    }
-                }
-                daysLived++;
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }
-
-        if (hungryDays >= 10 || thirstyDays >= 10 || sickDays >= 10) {
-            Farm.getInstance().killAnimal(this);
-        }
+    public int getId() {
+        return id;
     }
 
     public int getLifespan() {
@@ -113,23 +62,38 @@ public abstract class Animal implements Runnable {
         return medicineConsumption;
     }
 
-    public int getProductionQuantity() {
-        return productionQuantity;
+    public int getFoodQuantityProduction() {
+        return foodQuantityProduction;
     }
 
-    public ProductionType getProductionType() {
+    public ProductionType getFoodType() {
         return productionType;
     }
 
+    public boolean getIsHungry() {
+        return isHungry;
+    }
+
+    public boolean getIsThirsty() {
+        return isThirsty;
+    }
+
+    public void setIsHungry(boolean isHungry) {
+        this.isHungry = isHungry;
+    }
+
+    public void setIsThirsty(boolean isThirsty) {
+        this.isThirsty = isThirsty;
+    }
 
     public void updateProductivityBasedOnSeason(SeasonType currentSeason) {
         double seasonalEffectPercentage = calculateSeasonalEffect(currentSeason);
-        int adjustedFoodProduction = (int) (productionQuantity * seasonalEffectPercentage);
-        setProductionQuantity(adjustedFoodProduction);
+        int adjustedFoodProduction = (int) (foodQuantityProduction * seasonalEffectPercentage);
+        setFoodQuantityProduction(adjustedFoodProduction);
     }
 
-    public void setProductionQuantity(int productionQuantity) {
-        this.productionQuantity = productionQuantity;
+    public void setFoodQuantityProduction(int foodQuantityProduction) {
+        this.foodQuantityProduction = foodQuantityProduction;
     }
 
     protected abstract double calculateSeasonalEffect(SeasonType season);
@@ -144,24 +108,119 @@ public abstract class Animal implements Runnable {
 
     private void checkIfGetsSick() {
         Random random = new Random();
-        if (random.nextDouble() < chanceOfGettingSick) {
+        if (random.nextDouble(10) < chanceOfGettingSick) {
+            System.out.println("Animal got sick.");
             setIsSick(true);
         }
     }
 
-    public boolean isThirsty() {
-        return isThirsty;
+    public String getAnimalInfo() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(this.getClass().getSimpleName()).append(" with ID: ").append(this.id).append("\n");
+        sb.append("Lifespan: ").append(lifespan).append("\n");
+        sb.append("Chance of getting sick: ").append(chanceOfGettingSick).append("\n");
+        sb.append("Food consumption: ").append(foodConsumption).append("\n");
+        sb.append("Water consumption: ").append(waterConsumption).append("\n");
+        sb.append("Medicine consumption: ").append(medicineConsumption).append("\n");
+        sb.append("Production frequency: ").append(productionFrequency).append("\n");
+        sb.append("Production quantity: ").append(productionFrequency).append("\n");
+        sb.append("Production type: ").append(productionType).append("\n");
+        sb.append("IsHungry: ").append(isHungry).append(", IsThirsty: ").append(isThirsty).append(", isSick: ").append(isSick).append("\n\n");
+        return sb.toString();
+
     }
 
-    public void setThirsty(boolean thirsty) {
-        isThirsty = thirsty;
-    }
+    @Override
+    public void run() {
+        int daysLived = 1;
+        int sickDays = 0;
+        int hungryDays = 0;
+        int thirstyDays = 0;
+        GlobalClock clock = GlobalClock.getInstance();
+        Farm farm = Farm.getInstance();
 
-    public boolean isHungry() {
-        return isHungry;
-    }
+        while (!Thread.currentThread().isInterrupted() && daysLived < lifespan) {
+            try {
+                System.out.println("Started work!");
+                synchronized (clock.getMonitor()) {
+                    System.out.println("I am waiting!");
+                    clock.getMonitor().wait();
+                }
+                System.out.println("Someone notified me!");
+                System.out.println(this.getClass().getSimpleName() + " with ID: " + this.id + " is living day " + daysLived);
 
-    public void setHungry(boolean hungry) {
-        isHungry = hungry;
+                checkIfGetsSick();
+                SeasonType currentSeason = clock.getSeason();
+                updateProductivityBasedOnSeason(currentSeason);
+                if (!isSick) {
+                    if (isHungry) {
+                        System.out.println(this.getClass().getSimpleName() + " with ID: " + this.id + " is hungry.");
+                        synchronized (farm) {
+                            farm.feed(this);
+                        }
+                        if(!isHungry) {
+                            hungryDays = 0;
+                            System.out.println(this.getClass().getSimpleName() + " with ID: " + this.id + " ate!");
+                        } else {
+                            hungryDays++;
+                        }
+                    }
+                    if (isThirsty) {
+                        System.out.println(this.getClass().getSimpleName() + " with ID: " + this.id + " is thirsty.");
+                        synchronized (farm) {
+                            farm.giveWater(this);
+                        }
+                        if(!isThirsty) {
+                            thirstyDays = 0;
+                            System.out.println(this.getClass().getSimpleName() + " with ID: " + this.id + " drank!");
+                        } else {
+                            thirstyDays++;
+                        }
+                    }
+                } else {
+                    System.out.println(this.getClass().getSimpleName() + " with ID: " + this.id + " is sick.");
+                    synchronized (farm) {
+                        farm.putAnimalInHospital(this);
+                    }
+                    if(!isSick) {
+                        sickDays = 0;
+                        System.out.println(this.getClass().getSimpleName() + " with ID: " + this.id + " is not sick anymore.");
+                    } else {
+                        sickDays++;
+                    }
+                }
+                daysLived++;
+                setIsHungry(true);
+                setIsThirsty(true);
+                /*System.out.println("--- SUMMARY OF THE DAY: ---");*/
+                /*synchronized (farm) {*/
+                /*    System.out.println(farm.getDailySummary());
+                }
+                System.out.println("\n");
+                */
+                if (hungryDays >= 3) {
+                    System.out.println(this.getClass().getSimpleName() + " with ID: " + this.id + " died of hunger.");
+                    synchronized (farm) {
+                        farm.killAnimal(this);
+                    }
+                    Thread.currentThread().interrupt();
+                } else if (thirstyDays >= 3) {
+                    System.out.println(this.getClass().getSimpleName() + " with ID: " + this.id + " died of thirst.");
+                    synchronized (farm) {
+                        farm.killAnimal(this);
+                    }
+                    Thread.currentThread().interrupt();
+                } else if (sickDays >= 3) {
+                    System.out.println(this.getClass().getSimpleName() + " with ID: " + this.id + " died of sickness.");
+                    synchronized (farm) {
+                        farm.killAnimal(this);
+                    }
+                    Thread.currentThread().interrupt();
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+        System.out.println(this.getClass().getSimpleName() + " with ID: " + this.id + " died.");
     }
 }

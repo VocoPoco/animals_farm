@@ -12,8 +12,8 @@ public class Horse extends Animal {
     private static final int PRODUCTION_FREQUENCY = 10;
     private static final int FOOD_QUANTITY_PRODUCTION = 30;
     private static final ProductionType FOOD_TYPE = ProductionType.HORSE_MEAT;
-    public Horse() {
-        super(LIFESPAN, CHANCE_OF_GETTING_SICK, FOOD_CONSUMPTION, WATER_CONSUMPTION, MEDICINE_CONSUMPTION, PRODUCTION_FREQUENCY, FOOD_QUANTITY_PRODUCTION, FOOD_TYPE);
+    public Horse(int id) {
+        super(id, LIFESPAN, CHANCE_OF_GETTING_SICK, FOOD_CONSUMPTION, WATER_CONSUMPTION, MEDICINE_CONSUMPTION, PRODUCTION_FREQUENCY, FOOD_QUANTITY_PRODUCTION, FOOD_TYPE);
     }
 
     @Override
