@@ -5,7 +5,7 @@ import org.example.enums.SeasonType;
 
 public class Goat extends Animal {
     private static final int LIFESPAN = 10;
-    private static final double CHANCE_OF_GETTING_SICK = 0.3;
+    private static final double CHANCE_OF_GETTING_SICK = 10;
     private static final int FOOD_CONSUMPTION = 3;
     private static final int WATER_CONSUMPTION = 3;
     private static final int MEDICINE_CONSUMPTION = 16;

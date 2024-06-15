@@ -56,10 +56,13 @@ public class Farm {
         List<Animal> animals = new ArrayList<>(List.of(
                 new Cow(0),
                 new Duck(0)
+//                new Goat(0),
 //                new Hen(0),
+
+
+
 //                new Horse(0),
 //                new Pig(0),
-//                new Goat(0),
 //                new Sheep(0)
         ));
 

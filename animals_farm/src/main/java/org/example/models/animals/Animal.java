@@ -4,9 +4,7 @@ import org.example.GlobalClock;
 import org.example.enums.ProductionType;
 import org.example.enums.SeasonType;
 import org.example.models.Farm;
-import org.example.models.Inventory;
 
-import java.sql.SQLOutput;
 import java.util.Random;
 
 public abstract class Animal implements Runnable {
@@ -17,13 +15,13 @@ public abstract class Animal implements Runnable {
     private final int waterConsumption;
     private final int medicineConsumption;
     private final int productionFrequency;
-    private int foodQuantityProduction;
+    private int productionQuantity;
     private final ProductionType productionType;
     private boolean isHungry;
     private boolean isThirsty;
     private boolean isSick;
 
-    public Animal(int id, int lifespan, double chanceOfGettingSick, int foodConsumption, int waterConsumption, int medicineConsumption, int productionFrequency, int foodQuantityProduction, ProductionType productionType) {
+    public Animal(int id, int lifespan, double chanceOfGettingSick, int foodConsumption, int waterConsumption, int medicineConsumption, int productionFrequency, int productionQuantity, ProductionType productionType) {
         this.id = id;
         this.lifespan = lifespan;
         this.chanceOfGettingSick = chanceOfGettingSick;
@@ -31,7 +29,7 @@ public abstract class Animal implements Runnable {
         this.waterConsumption = waterConsumption;
         this.medicineConsumption = medicineConsumption;
         this.productionFrequency = productionFrequency;
-        this.foodQuantityProduction = foodQuantityProduction;
+        this.productionQuantity = productionQuantity;
         this.productionType = productionType;
         this.isHungry = true;
         this.isThirsty = true;
@@ -62,8 +60,8 @@ public abstract class Animal implements Runnable {
         return medicineConsumption;
     }
 
-    public int getFoodQuantityProduction() {
-        return foodQuantityProduction;
+    public int getProductionQuantity() {
+        return productionQuantity;
     }
 
     public ProductionType getFoodType() {
@@ -88,12 +86,12 @@ public abstract class Animal implements Runnable {
 
     public void updateProductivityBasedOnSeason(SeasonType currentSeason) {
         double seasonalEffectPercentage = calculateSeasonalEffect(currentSeason);
-        int adjustedFoodProduction = (int) (foodQuantityProduction * seasonalEffectPercentage);
-        setFoodQuantityProduction(adjustedFoodProduction);
+        int adjustedFoodProduction = (int) (productionQuantity * seasonalEffectPercentage);
+        setProductionQuantity(adjustedFoodProduction);
     }
 
-    public void setFoodQuantityProduction(int foodQuantityProduction) {
-        this.foodQuantityProduction = foodQuantityProduction;
+    public void setProductionQuantity(int productionQuantity) {
+        this.productionQuantity = productionQuantity;
     }
 
     protected abstract double calculateSeasonalEffect(SeasonType season);
@@ -141,12 +139,9 @@ public abstract class Animal implements Runnable {
 
         while (!Thread.currentThread().isInterrupted() && daysLived < lifespan) {
             try {
-                System.out.println("Started work!");
                 synchronized (clock.getMonitor()) {
-                    System.out.println("I am waiting!");
                     clock.getMonitor().wait();
                 }
-                System.out.println("Someone notified me!");
                 System.out.println(this.getClass().getSimpleName() + " with ID: " + this.id + " is living day " + daysLived);
 
                 checkIfGetsSick();
@@ -177,6 +172,10 @@ public abstract class Animal implements Runnable {
                             thirstyDays++;
                         }
                     }
+                    if (daysLived % productionFrequency == 0) {
+                        farm.getInventory().addItem(productionType, productionQuantity);
+                        System.out.println("______________Produced " + productionType + " " + productionType);
+                    }
                 } else {
                     System.out.println(this.getClass().getSimpleName() + " with ID: " + this.id + " is sick.");
                     synchronized (farm) {
@@ -192,12 +191,12 @@ public abstract class Animal implements Runnable {
                 daysLived++;
                 setIsHungry(true);
                 setIsThirsty(true);
-                /*System.out.println("--- SUMMARY OF THE DAY: ---");*/
-                /*synchronized (farm) {*/
-                /*    System.out.println(farm.getDailySummary());
+                System.out.println("--- SUMMARY OF THE DAY: ---");
+                synchronized (farm) {
+                    System.out.println(farm.getDailySummary());
                 }
                 System.out.println("\n");
-                */
+
                 if (hungryDays >= 3) {
                     System.out.println(this.getClass().getSimpleName() + " with ID: " + this.id + " died of hunger.");
                     synchronized (farm) {

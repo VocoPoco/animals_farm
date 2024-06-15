@@ -32,24 +32,11 @@ public class GlobalClock implements Runnable {
         return speed;
     }
 
-
-    public synchronized void waitForNextDay() {
-        int currentDay = day;
-        while (day == currentDay) {
-            try {
-                wait();
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break;
-            }
-        }
-    }
     @Override
     public void run() {
         while (!Thread.currentThread().isInterrupted()) {
             try {
                 int speedTime = 1000 / speed;
-                System.out.println(getHour());
                 Thread.sleep(speedTime);
                 addHour();
             } catch (InterruptedException e) {
@@ -59,6 +46,12 @@ public class GlobalClock implements Runnable {
         }
     }
 
+    public static GlobalClock getInstance() {
+        if (instance == null) {
+            instance = new GlobalClock(4);
+        }
+        return instance;
+    }
 
     public int getHour() {
         return hour;
@@ -150,12 +143,6 @@ public class GlobalClock implements Runnable {
         }
     }
 
-    public static GlobalClock getInstance() {
-        if (instance == null) {
-            instance = new GlobalClock(4);
-        }
-        return instance;
-    }
 
     public Object getMonitor() {
         return monitor;
